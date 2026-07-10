@@ -19,10 +19,12 @@ Requirements: Node.js 22.13+ and PostgreSQL.
 
 ```bash
 npm install
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-Set `DATABASE_URL`, `BETTER_AUTH_SECRET`, and application URLs in `.env`. OAuth variables are optional.
+Set `DATABASE_URL`, `BETTER_AUTH_SECRET`, and application URLs in `.env.local`. Generate the auth secret with `openssl rand -base64 32`; OAuth variables are optional. If the database password contains reserved URL characters such as `#`, `]`, or `@`, URL-encode the password before adding it to the connection string.
+
+`.env.example` is documentation only and is never loaded by Next.js. Do not place real credentials in it or commit `.env.local`.
 
 ```bash
 npm run db:generate
@@ -50,7 +52,9 @@ npm run db:studio    # open Drizzle Studio
 
 ## Deployment
 
-Deploy the application to Vercel and configure the environment variables from `.env.example`. Supabase PostgreSQL works with the standard `DATABASE_URL`; the data layer is portable to any PostgreSQL provider.
+Deploy the application to Vercel, then add the keys from `.env.example` under **Project Settings → Environment Variables**. At minimum, configure `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `NEXT_PUBLIC_APP_URL` for Production and Preview, then redeploy. Editing a repository file does not configure Vercel environment variables.
+
+Supabase PostgreSQL works with the standard `DATABASE_URL`; the data layer is portable to any PostgreSQL provider.
 
 For GitHub and Google OAuth, configure each provider callback URL as:
 

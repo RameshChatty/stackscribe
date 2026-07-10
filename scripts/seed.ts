@@ -1,16 +1,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { loadEnvConfig } from "@next/env";
 import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/postgres-js";
 import { marked } from "marked";
+import postgres from "postgres";
 
-import { db } from "../src/lib/db";
-import {
-  category,
-  story,
-  storyCategory,
-  user,
-} from "../src/lib/db/schema";
+import * as schema from "../src/lib/db/schema";
+import { category, story, storyCategory, user } from "../src/lib/db/schema";
 import { sanitizeContent } from "../src/lib/sanitize";
 import { estimateReadingMinutes, excerpt, slugify } from "../src/lib/utils";
 
@@ -54,6 +52,15 @@ const chapters = [
 ] as const;
 
 async function main() {
+  loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is not set in .env.local.");
+  }
+
+  const client = postgres(databaseUrl, { max: 1, prepare: false });
+  const db = drizzle(client, { schema });
   const now = new Date();
   const authorId = "seed-stackscribe-editor";
 
@@ -130,6 +137,7 @@ async function main() {
   }
 
   console.log(`Seeded ${categories.length} categories and ${chapters.length} stories.`);
+  await client.end();
 }
 
 main().catch((error) => {

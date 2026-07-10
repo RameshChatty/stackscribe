@@ -17,7 +17,7 @@ const globalForDb = globalThis as unknown as {
 function createClient() {
   if (!isDatabaseConfigured) {
     throw new Error(
-      "DATABASE_URL is not set. Copy .env.example to .env and configure a Postgres connection string.",
+      "DATABASE_URL is not set. Copy .env.example to .env.local and configure a Postgres connection string.",
     );
   }
   return postgres(env.DATABASE_URL, { max: 10, prepare: false });
