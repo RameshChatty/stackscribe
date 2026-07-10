@@ -1,10 +1,10 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
+import { loadEnvConfig } from "@next/env";
 import { eq } from "drizzle-orm";
 import { marked } from "marked";
 
-import { db } from "../src/lib/db";
 import {
   category,
   story,
@@ -54,6 +54,8 @@ const chapters = [
 ] as const;
 
 async function main() {
+  loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
+  const { db } = await import("../src/lib/db");
   const now = new Date();
   const authorId = "seed-stackscribe-editor";
 
