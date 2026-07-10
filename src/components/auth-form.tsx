@@ -6,13 +6,52 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 
 interface AuthFormProps {
   mode: "login" | "signup";
   enabled: boolean;
   githubEnabled: boolean;
   googleEnabled: boolean;
+}
+
+function authErrorMessage(payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "Authentication failed.";
+
+  if ("message" in payload && typeof payload.message === "string") {
+    return payload.message;
+  }
+
+  if ("error" in payload) {
+    if (typeof payload.error === "string") return payload.error;
+    if (
+      payload.error &&
+      typeof payload.error === "object" &&
+      "message" in payload.error &&
+      typeof payload.error.message === "string"
+    ) {
+      return payload.error.message;
+    }
+  }
+
+  return "Authentication failed.";
+}
+
+async function postCredentials(
+  path: "sign-up/email" | "sign-in/email",
+  body: Record<string, unknown>,
+) {
+  const response = await fetch(`/api/auth/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify(body),
+  });
+  const payload: unknown = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(authErrorMessage(payload));
+  }
 }
 
 export function AuthForm({
@@ -23,7 +62,11 @@ export function AuthForm({
 }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+  const requestedNext = searchParams.get("next");
+  const next =
+    requestedNext?.startsWith("/") && !requestedNext.startsWith("//")
+      ? requestedNext
+      : "/dashboard";
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,17 +86,19 @@ export function AuthForm({
       if (mode === "signup") {
         const name = String(formData.get("name"));
         const username = String(formData.get("username")) || undefined;
-        const result = await signUp.email({
+        await postCredentials("sign-up/email", {
           name,
           email,
           password,
           username,
           callbackURL: next,
         });
-        if (result.error) throw new Error(result.error.message);
       } else {
-        const result = await signIn.email({ email, password, callbackURL: next });
-        if (result.error) throw new Error(result.error.message);
+        await postCredentials("sign-in/email", {
+          email,
+          password,
+          callbackURL: next,
+        });
       }
       router.push(next);
       router.refresh();
@@ -113,7 +158,12 @@ export function AuthForm({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form
+          action={`/api/auth/${mode === "signup" ? "sign-up" : "sign-in"}/email`}
+          method="post"
+          onSubmit={handleSubmit}
+          className="mt-6 space-y-4"
+        >
           {mode === "signup" && (
             <>
               <label className="block">
@@ -143,6 +193,7 @@ export function AuthForm({
               </label>
             </>
           )}
+          <input type="hidden" name="callbackURL" value={next} />
           <label className="block">
             <span className="text-sm font-medium">Email</span>
             <input
