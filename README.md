@@ -35,6 +35,16 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+When testing from another device on your local network, use the computer's LAN origin consistently and add it to `.env.local` without a trailing slash:
+
+```env
+BETTER_AUTH_URL="http://192.168.1.10:3000"
+BETTER_AUTH_TRUSTED_ORIGINS="http://localhost:3000,http://192.168.1.10:3000"
+NEXT_PUBLIC_APP_URL="http://192.168.1.10:3000"
+```
+
+Replace the example IP with your computer's current LAN address and restart the development server after changing environment variables. List only origins you control; do not use a wildcard.
+
 Without a database configuration, the public website runs in preview mode using built-in sample stories. Authentication and persistence are disabled until PostgreSQL is configured.
 
 ## Commands
