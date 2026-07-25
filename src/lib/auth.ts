@@ -42,6 +42,7 @@ const database = isDatabaseConfigured
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: env.BETTER_AUTH_TRUSTED_ORIGINS,
   secret:
     env.BETTER_AUTH_SECRET ||
     "stackscribe-preview-only-secret-authentication-is-disabled",
