@@ -42,7 +42,19 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      /**
+       * Inline script to apply the saved theme before paint so there is no
+       * flash between colour schemes on page load.
+       */
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var e=localStorage.getItem("theme");if(e==="dark"||(!e&&window.matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(t){}})()`,
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col bg-background">
         <SiteHeader />
         <main className="flex-1">{children}</main>
